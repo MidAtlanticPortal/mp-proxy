@@ -4,7 +4,7 @@ import logging
 from urllib import urlencode
 from urlparse import urlparse
 
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, url, include
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -13,11 +13,11 @@ from proxy.views import proxy_view
 import requests
 
 from data_manager.models import Layer
-from ontology.models import RDFConcept
+# from ontology.models import RDFConcept
 
 
 #PROXY_FORMAT = u"http://%s/%s" % (settings.PROXY_DOMAIN, u"%s")
-def getLegendJSON(request, url):
+def getLegendJSON(request):
     logger = logging.getLogger(__name__)  
     logger.info("Begin getLegendJSON")
     logger.debug("Request: %s" % (request))
