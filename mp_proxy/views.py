@@ -1,8 +1,15 @@
 import datetime
 import json
 import logging
-from urllib import urlencode
-from urlparse import urlparse
+try:
+    # py3
+    from urllib.parse import urlencode
+    from urllib.parse import urlparse
+except (ModuleNotFoundError, ImportError):
+    # py2
+    from urllib import urlencode
+    from urlparse import urlparse
+
 
 from django.conf.urls import patterns, url, include
 from django.conf import settings
@@ -18,7 +25,7 @@ from data_manager.models import Layer
 
 #PROXY_FORMAT = u"http://%s/%s" % (settings.PROXY_DOMAIN, u"%s")
 def getLegendJSON(request):
-    logger = logging.getLogger(__name__)  
+    logger = logging.getLogger(__name__)
     logger.info("Begin getLegendJSON")
     logger.debug("Request: %s" % (request))
     conn = httplib2.Http()
@@ -35,7 +42,7 @@ def getLegendJSON(request):
         #resp, content = conn.request(url, request.method)
         try:
           results = requests.get(getUrl)
-        except Exception,e:
+        except Exception as e:
           if(logger):
             logger.exception(e)
         else:
@@ -81,58 +88,58 @@ def get_filters(request):
 def layer_proxy_view(request, layer_id):
     layer = get_object_or_404(Layer, id=layer_id, proxy_url=True)
     new_req_url = None
-    
+
     to = request.GET.get('to')
     from_ = request.GET.get('from')
-    
-    if not to and not from_: 
+
+    if not to and not from_:
         try:
             limit = settings.MP_ONTOLOGY_FILTER_DEFAULT_LIMIT
-        except: 
+        except:
             limit = 3
-        
+
         to = datetime.date.today()
         from_ = to.replace(year=to.year - limit)
 
         to = to.strftime('%Y-%m-%d')
         from_ = from_.strftime('%Y-%m-%d')
-    
+
     concepts = request.GET.get('concepts', [])
-    if concepts: 
+    if concepts:
         concepts = [concepts.split(',')]
     categories = request.GET.get('categories', [])
-    if categories: 
+    if categories:
         categories = categories.split(',')
     type_ = request.GET.get('type')
-    
+
     for category in categories:
         # Get the list of categories in the concept
         concept_list = RDFConcept.objects.filter(preflabel=category)
         if not concept_list:
             continue
-        concepts.append(child.slug 
+        concepts.append(child.slug
                         for child in concept_list[0].get_descendants()
                         if child.slug)
 
     query_parameters = []
     if from_:
         query_parameters.append("from=%s" % from_)
-    if to: 
+    if to:
         query_parameters.append("to=%s" % to)
-    if type_: 
+    if type_:
         query_parameters.append("type=%s" % type_)
 
     for concept_list in concepts:
         query_parameters.append('c=%s' % (','.join(concept_list)))
 
-    if query_parameters: 
+    if query_parameters:
         new_req_url = '%s&%s' % (layer.url, '&'.join(query_parameters))
 
     resp = None
     if new_req_url:
         r = requests.get(new_req_url)
         # Note: Future versions will need to use r.iter_content and a django
-        # Streaming HTTP Response. 
+        # Streaming HTTP Response.
         resp = HttpResponse(r.text, r.status_code)
     else:
         # If we don't have any categories we just do this:
@@ -149,6 +156,3 @@ def capabilities_proxy_view(request, layer_id):
     capabilities_url = orig_url + '?request=getCapabilities'
     extra_requests_args = {'headers': {'CONTENT-TYPE': 'text/xml'}}
     return proxy_view(request, capabilities_url, extra_requests_args)
-
-
-
