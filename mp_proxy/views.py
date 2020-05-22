@@ -11,7 +11,7 @@ except (ModuleNotFoundError, ImportError):
     from urlparse import urlparse
 
 
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
