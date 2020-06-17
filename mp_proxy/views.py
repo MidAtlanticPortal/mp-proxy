@@ -1,7 +1,12 @@
 import datetime
 import json
 import logging
-from urllib.parse import urlencode
+try:
+    # python 3
+    from urllib.parse import urlencode
+except (ModuleNotFoundError, ImportError) as e:
+    #python 2
+    from urllib import urlencode
 from urllib import parse as urlparse
 
 from django.conf import settings
